@@ -1,0 +1,47 @@
+from urllib.parse import urlparse
+
+import boto3
+import yaml
+
+class Package:
+def init(self, name, version, location):
+self.name = name
+self.version = version
+self.location = location
+
+def read_yaml_into_dict(path):
+with open(path, 'r') as stream:
+try:
+parsed_yaml = yaml.safe_load(stream)
+return parsed_yaml
+except yaml.YAMLError as exc:
+print(exc)
+
+def download_packages(ACCESS_KEY, SECRET_KEY, packages, output_dir):
+s3_client = boto3.client("s3", aws_access_key_id=ACCESS_KEY, aws_secret_access_key=SECRET_KEY)
+for package in packages:
+source = package.source
+parsed = urlparse(source, allow_fragments=False)
+s3_client.download_file(parsed.netloc, parsed.path + "/" + package.version + "/" + package.name,
+output_dir + "/" + package.name)
+
+def parse_package_dict(package_dict):
+packages = package_dict["externalDependency"]
+packages_list = []
+for package in packages:
+package_details = packages[package]
+packages_list.append(Package(package, package_details['version'], package_details['source']))
+return packages_list
+
+terst = read_yaml_into_dict("sample.yaml")
+test = parse_package_dict(terst)
+print(test)
+
+if name == 'main':
+print('Download packages from s3')
+aws_access_key = ""
+aws_secret_key = ""
+yaml_conf = ""
+working_dir = ""
+packages_list = parse_package_dict(read_yaml_into_dict(yaml_conf))
+download_packages(aws_access_key, aws_secret_key, packages_list, working_dir)
